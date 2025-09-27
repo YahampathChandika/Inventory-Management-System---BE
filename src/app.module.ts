@@ -5,6 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CommonModule } from './common/common.module';
+import { AuthModule } from './auth/auth.module';
 import { getDatabaseConfig } from './config/database.config';
 
 @Module({
@@ -30,8 +31,9 @@ import { getDatabaseConfig } from './config/database.config';
       },
     ]),
 
-    // Common module with shared entities
+    // Feature modules
     CommonModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
