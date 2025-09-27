@@ -1,0 +1,234 @@
+export interface InventoryReportData {
+  items: Array<{
+    name: string;
+    quantity: number;
+    sku: string;
+    unitPrice?: number;
+  }>;
+  generatedAt: string;
+  customMessage?: string;
+}
+
+export function generateInventoryReportHtml(data: InventoryReportData): string {
+  const { items, generatedAt, customMessage } = data;
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+        }
+        .custom-message {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #e3f2fd;
+        }
+        .low-stock {
+            background-color: #fff3cd !important;
+            color: #856404;
+        }
+        .out-of-stock {
+            background-color: #f8d7da !important;
+            color: #721c24;
+        }
+        .quantity {
+            font-weight: bold;
+            text-align: center;
+        }
+        .price {
+            text-align: right;
+            font-family: monospace;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #dee2e6;
+            padding-top: 20px;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-low {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .badge-out {
+            background-color: #dc3545;
+            color: white;
+        }
+        .badge-normal {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 Inventory Report</h1>
+            <p>Generated on ${generatedAt}</p>
+        </div>
+
+        ${
+          customMessage
+            ? `
+        <div class="custom-message">
+            <strong>Message:</strong> ${customMessage}
+        </div>
+        `
+            : ''
+        }
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">${items.length}</div>
+                <div class="stat-label">Total Items</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">${items.filter((item) => item.quantity < 10).length}</div>
+                <div class="stat-label">Low Stock</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">${items.filter((item) => item.quantity === 0).length}</div>
+                <div class="stat-label">Out of Stock</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">${items.reduce((sum, item) => sum + item.quantity, 0)}</div>
+                <div class="stat-label">Total Quantity</div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th style="text-align: center;">Quantity</th>
+                    <th>SKU</th>
+                    <th style="text-align: right;">Unit Price</th>
+                    <th style="text-align: center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${items
+                  .map((item) => {
+                    let rowClass = '';
+                    let statusBadge = '';
+
+                    if (item.quantity === 0) {
+                      rowClass = 'out-of-stock';
+                      statusBadge =
+                        '<span class="badge badge-out">Out of Stock</span>';
+                    } else if (item.quantity < 10) {
+                      rowClass = 'low-stock';
+                      statusBadge =
+                        '<span class="badge badge-low">Low Stock</span>';
+                    } else {
+                      statusBadge =
+                        '<span class="badge badge-normal">In Stock</span>';
+                    }
+
+                    return `
+                    <tr class="${rowClass}">
+                        <td><strong>${item.name}</strong></td>
+                        <td class="quantity">${item.quantity}</td>
+                        <td>${item.sku || 'N/A'}</td>
+                        <td class="price">${item.unitPrice ? '$' + item.unitPrice.toFixed(2) : 'N/A'}</td>
+                        <td style="text-align: center;">${statusBadge}</td>
+                    </tr>
+                    `;
+                  })
+                  .join('')}
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <p>This inventory report was automatically generated by the Inventory Management System.</p>
+            <p>For questions or concerns, please contact your inventory administrator.</p>
+        </div>
+    </div>
+</body>
+</html>
+  `;
+}

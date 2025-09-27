@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { MerchantsModule } from './merchants/merchants.module';
+import { EmailModule } from './email/email.module';
+import { ReportsModule } from './reports/reports.module';
 import { getDatabaseConfig } from './config/database.config';
 
 @Module({
@@ -40,6 +42,8 @@ import { getDatabaseConfig } from './config/database.config';
     UsersModule,
     InventoryModule,
     MerchantsModule,
+    EmailModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
