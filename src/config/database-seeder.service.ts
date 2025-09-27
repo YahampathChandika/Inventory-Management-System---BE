@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from '../common/entities/role.entity';
 import { User } from '../users/entities/user.entity';
 import { InventoryItem } from '../inventory/entities/inventory-item.entity';
+import { Merchant } from '../merchants/entities/merchant.entity';
 
 @Injectable()
 export class DatabaseSeederService implements OnModuleInit {
@@ -15,12 +16,15 @@ export class DatabaseSeederService implements OnModuleInit {
     private userRepository: Repository<User>,
     @InjectRepository(InventoryItem)
     private inventoryRepository: Repository<InventoryItem>,
+    @InjectRepository(Merchant)
+    private merchantRepository: Repository<Merchant>,
   ) {}
 
   async onModuleInit() {
     await this.seedRoles();
     await this.seedAdminUser();
     await this.seedInventoryItems();
+    await this.seedMerchants();
   }
 
   private async seedRoles() {
@@ -196,6 +200,61 @@ export class DatabaseSeederService implements OnModuleInit {
 
         console.log('✅ Sample inventory items created');
       }
+    }
+  }
+
+  private async seedMerchants() {
+    const existingMerchants = await this.merchantRepository.count();
+    if (existingMerchants === 0) {
+      const merchants = [
+        {
+          name: 'ABC Electronics',
+          email: 'orders@abcelectronics.com',
+          isActive: true,
+        },
+        {
+          name: 'Tech Solutions Ltd',
+          email: 'purchasing@techsolutions.com',
+          isActive: true,
+        },
+        {
+          name: 'Office Supplies Co',
+          email: 'sales@officesupplies.com',
+          isActive: true,
+        },
+        {
+          name: 'Digital World',
+          email: 'procurement@digitalworld.com',
+          isActive: true,
+        },
+        {
+          name: 'Business Equipment Inc',
+          email: 'orders@businessequip.com',
+          isActive: true,
+        },
+        {
+          name: 'IT Hardware Store',
+          email: 'admin@ithardware.store',
+          isActive: true,
+        },
+        {
+          name: 'Corporate Solutions',
+          email: 'contact@corpsolutions.net',
+          isActive: false,
+        },
+        {
+          name: 'Gadget Depot',
+          email: 'info@gadgetdepot.org',
+          isActive: true,
+        },
+      ];
+
+      for (const merchantData of merchants) {
+        const merchant = this.merchantRepository.create(merchantData);
+        await this.merchantRepository.save(merchant);
+      }
+
+      console.log('✅ Sample merchants created');
     }
   }
 }

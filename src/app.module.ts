@@ -8,6 +8,7 @@ import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { MerchantsModule } from './merchants/merchants.module';
 import { getDatabaseConfig } from './config/database.config';
 
 @Module({
@@ -38,6 +39,7 @@ import { getDatabaseConfig } from './config/database.config';
     AuthModule,
     UsersModule,
     InventoryModule,
+    MerchantsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
