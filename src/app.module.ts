@@ -4,32 +4,21 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { CommonModule } from './common/common.module';
+import { getDatabaseConfig } from './config/database.config';
 
 @Module({
   imports: [
     // Configuration module (loads .env file)
     ConfigModule.forRoot({
-      isGlobal: true, // Makes config available globally
+      isGlobal: true,
       envFilePath: '.env',
     }),
 
-    // Database configuration
+    // Database configuration with entities
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'mysql',
-        host: configService.get('DB_HOST'),
-        port: +configService.get('DB_PORT'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_DATABASE'),
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: configService.get('NODE_ENV') === 'development', // Only in development
-        logging: configService.get('NODE_ENV') === 'development',
-        extra: {
-          connectionLimit: 10, // Connection pool size
-        },
-      }),
+      useFactory: getDatabaseConfig,
       inject: [ConfigService],
     }),
 
@@ -37,9 +26,12 @@ import { AppService } from './app.service';
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 1 minute
-        limit: 100, // 100 requests per minute (will override for specific routes)
+        limit: 100, // 100 requests per minute
       },
     ]),
+
+    // Common module with shared entities
+    CommonModule,
   ],
   controllers: [AppController],
   providers: [AppService],
