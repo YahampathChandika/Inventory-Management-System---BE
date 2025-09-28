@@ -22,7 +22,7 @@ export class DatabaseSeederService implements OnModuleInit {
 
   async onModuleInit() {
     await this.seedRoles();
-    await this.seedAdminUser();
+    await this.seedTestUsers();
     await this.seedInventoryItems();
     await this.seedMerchants();
   }
@@ -54,30 +54,68 @@ export class DatabaseSeederService implements OnModuleInit {
     }
   }
 
-  private async seedAdminUser() {
-    const existingAdmin = await this.userRepository.findOne({
-      where: { email: 'admin@empite.com' },
+  private async seedTestUsers() {
+    // Get all roles
+    const adminRole = await this.roleRepository.findOne({
+      where: { name: 'Admin' },
+    });
+    const managerRole = await this.roleRepository.findOne({
+      where: { name: 'Manager' },
+    });
+    const viewerRole = await this.roleRepository.findOne({
+      where: { name: 'Viewer' },
     });
 
-    if (!existingAdmin) {
-      const adminRole = await this.roleRepository.findOne({
-        where: { name: 'Admin' },
+    if (!adminRole || !managerRole || !viewerRole) {
+      console.error('❌ Roles not found. Cannot create test users.');
+      return;
+    }
+
+    // Test users to create
+    const testUsers = [
+      {
+        username: 'admin@test.com',
+        email: 'admin@test.com',
+        password: 'admin123',
+        roleId: adminRole.id,
+        roleName: 'Admin',
+      },
+      {
+        username: 'manager@test.com',
+        email: 'manager@test.com',
+        password: 'manager123',
+        roleId: managerRole.id,
+        roleName: 'Manager',
+      },
+      {
+        username: 'viewer@test.com',
+        email: 'viewer@test.com',
+        password: 'viewer123',
+        roleId: viewerRole.id,
+        roleName: 'Viewer',
+      },
+    ];
+
+    // Create each test user if they don't exist
+    for (const userData of testUsers) {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: userData.email },
       });
 
-      if (adminRole) {
-        const hashedPassword = await bcrypt.hash('admin123', 12);
+      if (!existingUser) {
+        const hashedPassword = await bcrypt.hash(userData.password, 12);
 
-        const adminUser = this.userRepository.create({
-          username: 'admin@empite.com',
-          email: 'admin@empite.com',
+        const user = this.userRepository.create({
+          username: userData.username,
+          email: userData.email,
           passwordHash: hashedPassword,
-          roleId: adminRole.id,
+          roleId: userData.roleId,
           isActive: true,
         });
 
-        await this.userRepository.save(adminUser);
+        await this.userRepository.save(user);
         console.log(
-          '✅ Default admin user created (admin@empite.com / admin123)',
+          `✅ ${userData.roleName} test user created (${userData.email} / ${userData.password})`,
         );
       }
     }
@@ -87,7 +125,7 @@ export class DatabaseSeederService implements OnModuleInit {
     const existingItems = await this.inventoryRepository.count();
     if (existingItems === 0) {
       const adminUser = await this.userRepository.findOne({
-        where: { email: 'admin@empite.com' },
+        where: { email: 'admin@test.com' },
       });
 
       if (adminUser) {
