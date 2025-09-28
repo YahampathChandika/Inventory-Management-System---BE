@@ -55,7 +55,7 @@ A robust NestJS-based backend API for inventory management with role-based acces
 
 ### **Clone & Install**
 ```bash
-git clone <https://github.com/YahampathChandika/Inventory-Management-System---BE>
+git clone https://github.com/YahampathChandika/Inventory-Management-System---BE
 cd inventory-management-backend
 npm install
 ```
