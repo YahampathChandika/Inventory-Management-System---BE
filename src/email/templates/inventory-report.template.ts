@@ -24,7 +24,7 @@ export function generateInventoryReportHtml(data: InventoryReportData): string {
             font-family: Arial, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f4f4f4;
@@ -59,7 +59,6 @@ export function generateInventoryReportHtml(data: InventoryReportData): string {
             background-color: #f8f9fa;
             padding: 20px;
             border-radius: 8px;
-            width: 100%;
         }
         .stat {
             text-align: center;
@@ -112,10 +111,6 @@ export function generateInventoryReportHtml(data: InventoryReportData): string {
             font-weight: bold;
             text-align: center;
         }
-        .price {
-            text-align: right;
-            font-family: monospace;
-        }
         .footer {
             margin-top: 30px;
             text-align: center;
@@ -123,25 +118,6 @@ export function generateInventoryReportHtml(data: InventoryReportData): string {
             font-size: 12px;
             border-top: 1px solid #dee2e6;
             padding-top: 20px;
-        }
-        .badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .badge-low {
-            background-color: #ffc107;
-            color: #212529;
-        }
-        .badge-out {
-            background-color: #dc3545;
-            color: white;
-        }
-        .badge-normal {
-            background-color: #28a745;
-            color: white;
         }
     </style>
 </head>
@@ -168,14 +144,6 @@ export function generateInventoryReportHtml(data: InventoryReportData): string {
                 <div class="stat-label">Total Items</div>
             </div>
             <div class="stat">
-                <div class="stat-number">${items.filter((item) => item.quantity < 10).length}</div>
-                <div class="stat-label">Low Stock</div>
-            </div>
-            <div class="stat">
-                <div class="stat-number">${items.filter((item) => item.quantity === 0).length}</div>
-                <div class="stat-label">Out of Stock</div>
-            </div>
-            <div class="stat">
                 <div class="stat-number">${items.reduce((sum, item) => sum + item.quantity, 0)}</div>
                 <div class="stat-label">Total Quantity</div>
             </div>
@@ -186,46 +154,23 @@ export function generateInventoryReportHtml(data: InventoryReportData): string {
                 <tr>
                     <th>Item Name</th>
                     <th style="text-align: center;">Quantity</th>
-                    <th>SKU</th>
-                    <th style="text-align: right;">Unit Price</th>
-                    <th style="text-align: center;">Status</th>
                 </tr>
             </thead>
             <tbody>
                 ${items
                   .map((item) => {
                     let rowClass = '';
-                    let statusBadge = '';
 
                     if (item.quantity === 0) {
                       rowClass = 'out-of-stock';
-                      statusBadge =
-                        '<span class="badge badge-out">Out of Stock</span>';
                     } else if (item.quantity < 10) {
                       rowClass = 'low-stock';
-                      statusBadge =
-                        '<span class="badge badge-low">Low Stock</span>';
-                    } else {
-                      statusBadge =
-                        '<span class="badge badge-normal">In Stock</span>';
                     }
-
-                    // Fix: Safely handle unitPrice conversion to number
-                    const formatPrice = (price) => {
-                      if (!price && price !== 0) return 'N/A';
-                      const numPrice = Number(price);
-                      return isNaN(numPrice)
-                        ? 'N/A'
-                        : '$' + numPrice.toFixed(2);
-                    };
 
                     return `
                     <tr class="${rowClass}">
                         <td><strong>${item.name}</strong></td>
                         <td class="quantity">${item.quantity}</td>
-                        <td>${item.sku || 'N/A'}</td>
-                        <td class="price">${formatPrice(item.unitPrice)}</td>
-                        <td style="text-align: center;">${statusBadge}</td>
                     </tr>
                     `;
                   })
