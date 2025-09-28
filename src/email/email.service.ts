@@ -4,12 +4,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EmailLog, EmailStatus } from './entities/email-log.entity';
 import { EmailConfig, EmailSendResult } from './interfaces/email.interface';
+import * as SibApiV3Sdk from '@sendinblue/client';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private emailConfig: EmailConfig;
   private isProductionMode: boolean;
+  private brevoClient: SibApiV3Sdk.TransactionalEmailsApi;
 
   constructor(
     private configService: ConfigService,
@@ -17,6 +19,7 @@ export class EmailService {
     private emailLogRepository: Repository<EmailLog>,
   ) {
     this.initializeEmailConfig();
+    this.initializeBrevoClient();
   }
 
   private initializeEmailConfig() {
@@ -42,6 +45,19 @@ export class EmailService {
     }
   }
 
+  private initializeBrevoClient() {
+    if (this.isProductionMode) {
+      // Initialize Brevo client for production
+      const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+      apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, this.emailConfig.apiKey);
+
+      this.brevoClient = apiInstance;
+      this.logger.log(
+        '✅ Brevo client initialized for production email sending',
+      );
+    }
+  }
+
   async sendEmail(
     to: string,
     subject: string,
@@ -61,8 +77,34 @@ export class EmailService {
 
     try {
       if (this.isProductionMode) {
-        // TODO: Implement actual Brevo API call here
-        throw new Error('Production email sending not implemented yet');
+        // Production mode: Send actual email via Brevo
+        this.logger.log(`📧 Sending email via Brevo to: ${to}`);
+
+        const emailData = new SibApiV3Sdk.SendSmtpEmail();
+        emailData.to = [{ email: to }];
+        emailData.sender = {
+          email: this.emailConfig.senderEmail,
+          name: this.emailConfig.senderName,
+        };
+        emailData.subject = subject;
+        emailData.htmlContent = htmlContent;
+
+        // Send email through Brevo
+        const response = await this.brevoClient.sendTransacEmail(emailData);
+
+        this.logger.log(
+          `✅ Email sent successfully via Brevo. Message ID: ${response.body.messageId}`,
+        );
+
+        // Update email log on success
+        savedLog.status = EmailStatus.SENT;
+        savedLog.sentAt = new Date();
+        await this.emailLogRepository.save(savedLog);
+
+        return {
+          success: true,
+          messageId: response.body.messageId,
+        };
       } else {
         // Development mode: simulate email sending
         this.logger.log(`📧 SIMULATED EMAIL SENT:`);
@@ -75,25 +117,25 @@ export class EmailService {
 
         // Simulate processing time
         await this.delay(200);
+
+        // Update email log on success
+        savedLog.status = EmailStatus.SENT;
+        savedLog.sentAt = new Date();
+        await this.emailLogRepository.save(savedLog);
+
+        const messageId = `sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        return {
+          success: true,
+          messageId,
+        };
       }
-
-      // Update email log on success
-      savedLog.status = EmailStatus.SENT;
-      savedLog.sentAt = new Date();
-      await this.emailLogRepository.save(savedLog);
-
-      const messageId = `sim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-      return {
-        success: true,
-        messageId,
-      };
     } catch (error) {
       // Update email log on failure
       savedLog.status = EmailStatus.FAILED;
       await this.emailLogRepository.save(savedLog);
 
-      this.logger.error(`Failed to send email to ${to}:`, error);
+      this.logger.error(`❌ Failed to send email to ${to}:`, error);
 
       return {
         success: false,

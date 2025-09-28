@@ -59,6 +59,7 @@ export function generateInventoryReportHtml(data: InventoryReportData): string {
             background-color: #f8f9fa;
             padding: 20px;
             border-radius: 8px;
+            width: 100%;
         }
         .stat {
             text-align: center;
@@ -209,12 +210,21 @@ export function generateInventoryReportHtml(data: InventoryReportData): string {
                         '<span class="badge badge-normal">In Stock</span>';
                     }
 
+                    // Fix: Safely handle unitPrice conversion to number
+                    const formatPrice = (price) => {
+                      if (!price && price !== 0) return 'N/A';
+                      const numPrice = Number(price);
+                      return isNaN(numPrice)
+                        ? 'N/A'
+                        : '$' + numPrice.toFixed(2);
+                    };
+
                     return `
                     <tr class="${rowClass}">
                         <td><strong>${item.name}</strong></td>
                         <td class="quantity">${item.quantity}</td>
                         <td>${item.sku || 'N/A'}</td>
-                        <td class="price">${item.unitPrice ? '$' + item.unitPrice.toFixed(2) : 'N/A'}</td>
+                        <td class="price">${formatPrice(item.unitPrice)}</td>
                         <td style="text-align: center;">${statusBadge}</td>
                     </tr>
                     `;
